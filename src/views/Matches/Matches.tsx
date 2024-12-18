@@ -361,6 +361,7 @@ export function Matches(props: MatchesProps) {
             </Table>
           </TableContainer>
           <TablePagination
+            rowsPerPageOptions={[5, 10]}
             component="div"
             count={total}
             rowsPerPage={size}
