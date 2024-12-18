@@ -66,3 +66,15 @@ Every task has its own **Dos and Don'ts** section; but there are some things tha
 - **[react-router v5](https://v5.reactrouter.com/web/guides/quick-start)**
 - **[react](https://react.dev/reference/react)**
 - **[vite](https://vitejs.dev/guide/)**
+
+
+### Solutions:
+
+I create a separate branch and corresponding pull request (PR) for each task to streamline the development process.
+
+- [x] **1.** Technical work: filling the gaps in the auth flow. [Link PR Description](https://github.com/matiasmenker/playtomic-frontend-task/pull/1)
+- [x] **2.** Product feature request: download all matches. [Link PR Description](https://github.com/matiasmenker/playtomic-frontend-task/pull/2)
+- [x] **3.** Pull Request review: showing correct dates. [Link PR Review](https://github.com/matiasmenker/playtomic-frontend-task/pull/3)
+- [x] **4.** _(optional)_ Technical work: auth refresh flow. [Link PR Description](https://github.com/matiasmenker/playtomic-frontend-task/pull/4)
+
+
