@@ -73,11 +73,21 @@ function AuthProvider(props: AuthProviderProps): JSX.Element {
   const [tokens, setTokens] = useState<Auth['tokens']>(undefined);
   const [currentUser, setCurrentUser] = useState<Auth['currentUser']>(undefined);
 
+  const updateTokens = (tokens: Exclude<Auth['tokens'], undefined>) => {
+    setTokens(tokens);
+    setCurrentUser(tokens ? {
+      email: '',
+      name: '',
+      userId: ''
+    } : null);
+    onAuthChange?.(tokens);
+  }
+
   const value = useMemo(() => {
     return {
       tokens,
       currentUser,
-      setTokens,
+      setTokens: updateTokens,
       setCurrentUser,
     }
   }, [
