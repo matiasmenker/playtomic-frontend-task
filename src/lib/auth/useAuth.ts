@@ -1,6 +1,8 @@
 import { Auth } from "./types";
 import { AuthContext } from "@/lib/auth/AuthProvider";
-import { useContext } from "react";
+import { useContext, useCallback } from "react";
+import { useApiFetcher } from "@/lib/api";
+
 /**
  * Returns the current auth state. See {@link Auth} for more information on
  * what is included there.
@@ -9,23 +11,54 @@ import { useContext } from "react";
  */
 function useAuth(): Auth {
   const authContext = useContext(AuthContext);
+  const fetcher = useApiFetcher();
 
   if (!authContext) {
     throw new TypeError(
         "useAuth must be used within a descendant of AuthProvider."
     );
   }
-  
+
+  const login = useCallback(
+      async (credentials: { email: string; password: string }): Promise<void> => {
+        if (authContext.currentUser) {
+          throw new Error("User is already logged in.");
+        }
+
+        const response = await fetcher("POST /v3/auth/login", {
+          data: credentials,
+        });
+
+        if (!response.ok) {
+          throw new Error("Invalid credentials.");
+        }
+
+        const { accessToken, accessTokenExpiresAt, refreshToken, refreshTokenExpiresAt } = response.data;
+
+        authContext.setTokens({
+          access: accessToken,
+          accessExpiresAt: accessTokenExpiresAt,
+          refresh: refreshToken,
+          refreshExpiresAt: refreshTokenExpiresAt,
+        });
+      },
+      [authContext, fetcher]
+  );
+
+  const logout = useCallback(async (): Promise<void> => {
+    if (!authContext.currentUser) {
+      throw new Error("No user is currently logged in.");
+    }
+    authContext.setTokens(null);
+    authContext.setCurrentUser(null);
+    return Promise.resolve();
+  }, [authContext]);
+
   return {
     tokens: null,
     currentUser: null,
-    login(credentials) {
-      const { email, password } = credentials
-      return Promise.reject(new Error('Not yet implemented'))
-    },
-    logout() {
-      return Promise.reject(new Error('Not yet implemented'))
-    },
+    login,
+    logout
   }
 }
 
