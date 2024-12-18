@@ -1,4 +1,4 @@
-import {createContext, useState, ReactNode, useMemo} from 'react';
+import {createContext, useState, ReactNode, useEffect, useMemo} from 'react';
 import { Auth, AuthInitializeConfig } from './types';
 
 interface AuthProviderProps extends AuthInitializeConfig {
@@ -83,6 +83,24 @@ function AuthProvider(props: AuthProviderProps): JSX.Element {
     onAuthChange?.(tokens);
   }
 
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const resolvedTokens =
+            initialTokens instanceof Promise ? await initialTokens : initialTokens;
+        if (resolvedTokens) {
+          updateTokens(resolvedTokens);
+        } else {
+          updateTokens(null);
+        }
+      } catch (error) {
+        updateTokens(null);
+      }
+    };
+
+    void initializeAuth();
+  }, [initialTokens]);
+
   const value = useMemo(() => {
     return {
       tokens,
@@ -97,4 +115,4 @@ function AuthProvider(props: AuthProviderProps): JSX.Element {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-export { AuthProvider, type AuthProviderProps }
+export { AuthProvider, AuthContext };
