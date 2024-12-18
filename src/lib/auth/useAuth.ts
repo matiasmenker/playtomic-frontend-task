@@ -59,7 +59,7 @@ function useAuth(): Auth {
         });
 
         if (!response.ok) {
-          throw new Error("Invalid credentials.");
+          throw new Error("Wrong credentials");
         }
 
         const { accessToken, accessTokenExpiresAt, refreshToken, refreshTokenExpiresAt } = response.data;
@@ -84,8 +84,8 @@ function useAuth(): Auth {
   }, [authContext]);
 
   return {
-    tokens: null,
-    currentUser: null,
+    tokens: authContext.tokens,
+    currentUser: authContext.currentUser,
     login,
     logout
   }
