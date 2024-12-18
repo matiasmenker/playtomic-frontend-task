@@ -1,20 +1,19 @@
-import {createContext, useState, ReactNode, useEffect, useMemo} from 'react';
-import { Auth, AuthInitializeConfig } from './types';
+import { createContext, useState, ReactNode, useEffect, useMemo } from "react";
+import { Auth, AuthInitializeConfig } from "./types";
 
 interface AuthProviderProps extends AuthInitializeConfig {
-  children?: ReactNode
+  children?: ReactNode;
 
   /**
    * @see {@link AuthInitializeConfig.initialTokens}
    */
-  initialTokens?: AuthInitializeConfig['initialTokens']
+  initialTokens?: AuthInitializeConfig["initialTokens"];
 
   /**
    * @see {@link AuthInitializeConfig.onAuthChange}
    */
-  onAuthChange?: AuthInitializeConfig['onAuthChange']
+  onAuthChange?: AuthInitializeConfig["onAuthChange"];
 }
-
 
 interface AuthContextValue {
   /**
@@ -25,7 +24,7 @@ interface AuthContextValue {
    *
    * @see {@link Auth.currentUser} for details about the structure of this property.
    */
-  currentUser: Auth['currentUser'];
+  currentUser: Auth["currentUser"];
 
   /**
    * Updates the `currentUser` state.
@@ -36,7 +35,7 @@ interface AuthContextValue {
    * @param user - The new user information
    * @see {@link Auth.currentUser}
    */
-  setCurrentUser(user: Auth['currentUser']): void;
+  setCurrentUser(user: Auth["currentUser"]): void;
 
   /**
    * The current authentication tokens.
@@ -46,7 +45,7 @@ interface AuthContextValue {
    *
    * @see {@link Auth.tokens} for details about the structure of this property.
    */
-  tokens: Auth['tokens'];
+  tokens: Auth["tokens"];
   /**
    * Updates the `tokens` state.
    *
@@ -56,11 +55,10 @@ interface AuthContextValue {
    * @param tokens - The new authentication tokens
    * @see {@link Auth.tokens}
    */
-  setTokens(tokens: Auth['tokens']): void;
+  setTokens(tokens: Auth["tokens"]): void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
 
 /**
  * Initializes the auth state and exposes it to the component-tree below.
@@ -69,25 +67,32 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
  * a single source of truth.
  */
 function AuthProvider(props: AuthProviderProps): JSX.Element {
-  const { initialTokens, onAuthChange, children } = props
-  const [tokens, setTokens] = useState<Auth['tokens']>(undefined);
-  const [currentUser, setCurrentUser] = useState<Auth['currentUser']>(undefined);
+  const { initialTokens, onAuthChange, children } = props;
+  const [tokens, setTokens] = useState<Auth["tokens"]>(undefined);
+  const [currentUser, setCurrentUser] =
+    useState<Auth["currentUser"]>(undefined);
 
-  const updateTokens = (tokens: Exclude<Auth['tokens'], undefined>) => {
+  const updateTokens = (tokens: Exclude<Auth["tokens"], undefined>) => {
     setTokens(tokens);
-    setCurrentUser(tokens ? {
-      email: '',
-      name: '',
-      userId: ''
-    } : null);
+    setCurrentUser(
+      tokens
+        ? {
+            email: "",
+            name: "",
+            userId: "",
+          }
+        : null
+    );
     onAuthChange?.(tokens);
-  }
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         const resolvedTokens =
-            initialTokens instanceof Promise ? await initialTokens : initialTokens;
+          initialTokens instanceof Promise
+            ? await initialTokens
+            : initialTokens;
         if (resolvedTokens) {
           updateTokens(resolvedTokens);
         } else {
@@ -107,11 +112,8 @@ function AuthProvider(props: AuthProviderProps): JSX.Element {
       currentUser,
       setTokens: updateTokens,
       setCurrentUser,
-    }
-  }, [
-    tokens,
-    currentUser,
-  ]);
+    };
+  }, [tokens, currentUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

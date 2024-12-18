@@ -16,62 +16,67 @@ function useAuth(): Auth {
 
   if (!authContext) {
     throw new TypeError(
-        "useAuth must be used within a descendant of AuthProvider."
+      "useAuth must be used within a descendant of AuthProvider."
     );
   }
 
   useSWR(
-      authContext.tokens ? "GET /v1/users/me" : null,
-      async (url) => {
-        const userResponse = await fetcher(url, {});
-        if (!userResponse.ok) {
-          throw new Error(userResponse.data.message);
-        }
-        return userResponse.data;
-      },
-      {
-        onSuccess: (userResponse) => {
-          authContext.setCurrentUser({
-            email: userResponse.email ?? "",
-            userId: userResponse.userId,
-            name: userResponse.displayName,
-          });
-        },
-        onError: () => {
-          //Todo integrate refresh functionality
-          authContext.setTokens(null);
-          authContext.setCurrentUser(null);
-        },
-        revalidateOnFocus: false,
-        shouldRetryOnError: false,
-        revalidateOnMount: false,
+    authContext.tokens ? "GET /v1/users/me" : null,
+    async (url) => {
+      const userResponse = await fetcher(url, {});
+      if (!userResponse.ok) {
+        throw new Error(userResponse.data.message);
       }
+      return userResponse.data;
+    },
+    {
+      onSuccess: (userResponse) => {
+        authContext.setCurrentUser({
+          email: userResponse.email ?? "",
+          userId: userResponse.userId,
+          name: userResponse.displayName,
+        });
+      },
+      onError: () => {
+        //Todo integrate refresh functionality
+        authContext.setTokens(null);
+        authContext.setCurrentUser(null);
+      },
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+      revalidateOnMount: false,
+    }
   );
 
   const login = useCallback(
-      async (credentials: { email: string; password: string }): Promise<void> => {
-        if (authContext.currentUser) {
-          throw new Error("User is already logged in.");
-        }
+    async (credentials: { email: string; password: string }): Promise<void> => {
+      if (authContext.currentUser) {
+        throw new Error("User is already logged in.");
+      }
 
-        const response = await fetcher("POST /v3/auth/login", {
-          data: credentials,
-        });
+      const response = await fetcher("POST /v3/auth/login", {
+        data: credentials,
+      });
 
-        if (!response.ok) {
-          throw new Error("Wrong credentials");
-        }
+      if (!response.ok) {
+        throw new Error("Wrong credentials");
+      }
 
-        const { accessToken, accessTokenExpiresAt, refreshToken, refreshTokenExpiresAt } = response.data;
+      const {
+        accessToken,
+        accessTokenExpiresAt,
+        refreshToken,
+        refreshTokenExpiresAt,
+      } = response.data;
 
-        authContext.setTokens({
-          access: accessToken,
-          accessExpiresAt: accessTokenExpiresAt,
-          refresh: refreshToken,
-          refreshExpiresAt: refreshTokenExpiresAt,
-        });
-      },
-      [authContext, fetcher]
+      authContext.setTokens({
+        access: accessToken,
+        accessExpiresAt: accessTokenExpiresAt,
+        refresh: refreshToken,
+        refreshExpiresAt: refreshTokenExpiresAt,
+      });
+    },
+    [authContext, fetcher]
   );
 
   const logout = useCallback(async (): Promise<void> => {
@@ -87,8 +92,8 @@ function useAuth(): Auth {
     tokens: authContext.tokens,
     currentUser: authContext.currentUser,
     login,
-    logout
-  }
+    logout,
+  };
 }
 
-export { useAuth }
+export { useAuth };
