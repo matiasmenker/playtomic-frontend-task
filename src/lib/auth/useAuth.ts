@@ -1,8 +1,9 @@
 import { Auth } from "./types";
+import useSWR from "swr";
 import { AuthContext } from "@/lib/auth/AuthProvider";
 import { useContext, useCallback } from "react";
 import { useApiFetcher } from "@/lib/api";
-import useSWR from "swr";
+import useRefreshToken from "@/lib/auth/useRefreshToken";
 
 /**
  * Returns the current auth state. See {@link Auth} for more information on
@@ -20,6 +21,8 @@ function useAuth(): Auth {
     );
   }
 
+  useRefreshToken();
+
   useSWR(
     authContext.tokens ? "GET /v1/users/me" : null,
     async (url) => {
@@ -36,11 +39,6 @@ function useAuth(): Auth {
           userId: userResponse.userId,
           name: userResponse.displayName,
         });
-      },
-      onError: () => {
-        //Todo integrate refresh functionality
-        authContext.setTokens(null);
-        authContext.setCurrentUser(null);
       },
       revalidateOnFocus: false,
       shouldRetryOnError: false,
