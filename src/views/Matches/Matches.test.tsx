@@ -1,10 +1,10 @@
-import { render, screen, within } from "@testing-library/react";
-import { server } from "../../../../technical-test-frontend-main/src/lib/msw/node";
-import { Matches } from "./Matches";
 import { ReactNode } from "react";
-import { ApiConfigProvider } from "../../../../technical-test-frontend-main/src/lib/api";
+import { vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { expect } from "vitest";
+import { server } from "@/lib/msw/node";
+import { Matches } from "./Matches";
+import { ApiConfigProvider } from "@/lib/api";
 
 beforeAll(() => {
   server.listen();

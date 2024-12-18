@@ -364,30 +364,20 @@ export function Matches(props: MatchesProps) {
               </TableHead>
               <TableBody>
                 {visibleMatches.map((match) => {
-                  const selectedMatches = selected.includes(match.matchId);
                   return (
                     <TableRow
                       hover
                       onClick={() => handleClick(match.matchId)}
                       role="row"
-                      aria-checked={selectedMatches}
+                      aria-checked={selected.includes(match.matchId)}
                       tabIndex={-1}
                       key={match.matchId}
-                      selected={selectedMatches}
+                      selected={selected.includes(match.matchId)}
                     >
                       <TableCell padding="checkbox">
                         <Checkbox
                           color="primary"
-                          indeterminate={
-                            selected.length > 0 &&
-                            selected.length < matches.length
-                          }
-                          checked={
-                            matches.length > 0 &&
-                            selected.length === matches.length
-                          }
-                          onChange={handleSelectAllClick}
-                          inputProps={{ "aria-label": "Select all rows" }} // Add accessible label
+                          checked={selected.includes(match.matchId)}
                         />
                       </TableCell>
                       <TableCell>{match.courtId}</TableCell>

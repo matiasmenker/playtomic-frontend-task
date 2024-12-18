@@ -71,7 +71,9 @@ const convertToCSV = (data: Match[]): string => {
   });
 
   const csvContent = [headers, ...rows]
-    .map((row) => row.map((cell) => `"${cell}"`).join(","))
+    .map(function (row: string[]): string {
+      return row.map((cell) => `"${cell}"`).join(",");
+    })
     .join("\n");
 
   return csvContent;
