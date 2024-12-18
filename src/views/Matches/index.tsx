@@ -1,2 +1,2 @@
-import { Matches } from './Matches'
-export default Matches
+import { Matches } from "./Matches";
+export default Matches;
