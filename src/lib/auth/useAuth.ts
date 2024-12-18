@@ -2,6 +2,7 @@ import { Auth } from "./types";
 import { AuthContext } from "@/lib/auth/AuthProvider";
 import { useContext, useCallback } from "react";
 import { useApiFetcher } from "@/lib/api";
+import useSWR from "swr";
 
 /**
  * Returns the current auth state. See {@link Auth} for more information on
@@ -18,6 +19,34 @@ function useAuth(): Auth {
         "useAuth must be used within a descendant of AuthProvider."
     );
   }
+
+  useSWR(
+      authContext.tokens ? "GET /v1/users/me" : null,
+      async (url) => {
+        const userResponse = await fetcher(url, {});
+        if (!userResponse.ok) {
+          throw new Error(userResponse.data.message);
+        }
+        return userResponse.data;
+      },
+      {
+        onSuccess: (userResponse) => {
+          authContext.setCurrentUser({
+            email: userResponse.email ?? "",
+            userId: userResponse.userId,
+            name: userResponse.displayName,
+          });
+        },
+        onError: () => {
+          //Todo integrate refresh functionality
+          authContext.setTokens(null);
+          authContext.setCurrentUser(null);
+        },
+        revalidateOnFocus: false,
+        shouldRetryOnError: false,
+        revalidateOnMount: false,
+      }
+  );
 
   const login = useCallback(
       async (credentials: { email: string; password: string }): Promise<void> => {
