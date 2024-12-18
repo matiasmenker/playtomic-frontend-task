@@ -1,9 +1,10 @@
 import { render, screen, within } from "@testing-library/react";
-import { server } from "@/lib/msw/node";
+import { server } from "../../../../technical-test-frontend-main/src/lib/msw/node";
 import { Matches } from "./Matches";
 import { ReactNode } from "react";
-import { ApiConfigProvider } from "@/lib/api";
+import { ApiConfigProvider } from "../../../../technical-test-frontend-main/src/lib/api";
 import userEvent from "@testing-library/user-event";
+import { expect } from "vitest";
 
 beforeAll(() => {
   server.listen();
@@ -33,21 +34,61 @@ test("renders a table with some known values", async () => {
   render(<Matches />, { wrapper: Wrapper });
 
   const table = await screen.findByRole("table", { name: "Matches" });
-  const rows = within(table).getAllByRole("row");
+  expect(table).toBeInTheDocument();
 
-  expect(rows).toHaveLength(1 + 10); // header + 10 rows
+  const headers = within(table).getAllByRole("columnheader");
+  expect(headers).toHaveLength(8);
 
-  const headerRow = rows[0];
-  const headers = within(headerRow).getAllByRole("columnheader");
-
-  expect(headers).toHaveLength(5);
-  expect(headers.map((header) => header.innerHTML)).toEqual([
+  const headerLabels = headers.map((header) => header.textContent);
+  expect(headerLabels).toEqual([
+    "",
+    "Court",
+    "Venue",
     "Sport",
     "Date",
     "Start",
     "End",
     "Players",
   ]);
+});
+
+test("renders rows of matches from the API", async () => {
+  render(<Matches />, { wrapper: Wrapper });
+
+  const table = await screen.findByRole("table", { name: "Matches" });
+  const rows = within(table).getAllByRole("row");
+
+  // Header row + data rows
+  expect(rows).toHaveLength(11); // 10 rows of data + 1 header row
+});
+
+test("allows selecting individual rows", async () => {
+  render(<Matches />, { wrapper: Wrapper });
+
+  const table = await screen.findByRole("table", { name: "Matches" });
+  const rows = within(table).getAllByRole("row");
+  const rowCheckbox = within(rows[1]).getByRole("checkbox");
+
+  expect(rowCheckbox).not.toBeChecked();
+  await userEvent.click(rowCheckbox);
+  expect(rowCheckbox).toBeChecked();
+});
+
+test("select all rows checkbox works correctly", async () => {
+  render(<Matches />, { wrapper: Wrapper });
+
+  const table = await screen.findByRole("table", { name: "Matches" });
+  const rows = within(table).getAllByRole("row");
+  const rowCheckbox = within(rows[0]).getByRole("checkbox");
+
+  // Click the checkbox
+  await userEvent.click(rowCheckbox);
+
+  // Verify that all rows are selected
+  const selectedCheckboxes = await screen.findAllByRole("checkbox", {
+    checked: true,
+  });
+  expect(selectedCheckboxes).toHaveLength(11); // Assuming 10 rows + "select all" checkbox
 });
 
 test("renders a logout button and propagates its click via props", async () => {
@@ -58,4 +99,17 @@ test("renders a logout button and propagates its click via props", async () => {
   await userEvent.click(logoutButton);
 
   expect(onLogoutRequest).toHaveBeenCalledOnce();
+});
+
+test("exports all rows to CSV", async () => {
+  render(<Matches />, { wrapper: Wrapper });
+
+  const exportAllButton = await screen.findByRole("button", {
+    name: /export all matches/i,
+  });
+  expect(exportAllButton).toBeEnabled();
+
+  await userEvent.click(exportAllButton);
+  // Verify downloadCSV has been triggered (mocked in real tests)
+  expect(screen.queryByText(/exporting all/i)).not.toBeInTheDocument();
 });

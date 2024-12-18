@@ -18,6 +18,7 @@ import { Match } from "@/lib/api-types";
 import Chip from "@mui/material/Chip";
 import AvatarGroup from "@mui/material/AvatarGroup";
 import Avatar from "@mui/material/Avatar";
+import { convertToCSV, downloadCSV, getComparator } from "./Matches.utils";
 import AppBar from "@mui/material/AppBar";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -32,6 +33,10 @@ interface MatchKeys {
   endTime: string;
 }
 
+interface MatchesProps {
+  onLogoutRequest?: () => void;
+}
+
 type Order = "asc" | "desc";
 
 const matchesCells = [
@@ -43,10 +48,6 @@ const matchesCells = [
   { id: "endTime", label: "End" },
   { id: "players", label: "Players" },
 ];
-
-interface MatchesProps {
-  onLogoutRequest?: () => void;
-}
 
 /**
  * Matches component - Displays a table of matches with sorting, selection, and export features.
@@ -80,7 +81,6 @@ export function Matches(props: MatchesProps) {
       if (!res.ok) {
         throw new Error(res.data.message);
       }
-
       const totalCount = res.headers.get("total");
       const total = totalCount ? Number.parseInt(totalCount) : res.data.length;
       return { matches: res.data, total };
@@ -161,6 +161,65 @@ export function Matches(props: MatchesProps) {
     setPage(0);
   };
 
+  /**
+   * Exports the selected matches to a CSV file.
+   */
+  const handleExportSelected = (): void => {
+    if (selected.length === 0) return;
+
+    const selectedMatches = matches.filter((match) =>
+      selected.includes(match.matchId)
+    );
+
+    const csvContent = convertToCSV(selectedMatches);
+    downloadCSV(csvContent, "selected_matches.csv");
+  };
+
+  /**
+   * Recursively fetches all matches from the API.
+   *
+   * @param {number} page - The current page.
+   * @param {number} size - The number of items per page.
+   * @param {Match[]} accumulatedMatches - The matches collected so far.
+   * @returns {Promise<Match[]>} All matches.
+   */
+  const fetchAllMatches = (
+    page = 0,
+    size = 10,
+    accumulatedMatches: Match[] = []
+  ): Promise<Match[]> => {
+    return fetcher("GET /v1/matches", { page, size }).then((res) => {
+      if (!res.ok) {
+        throw new Error(res.data.message);
+      }
+
+      const fetchedMatches = res.data;
+      const totalCount = res.headers.get("total");
+      const total = totalCount ? Number.parseInt(totalCount) : res.data.length;
+
+      const allMatches = [...accumulatedMatches, ...fetchedMatches];
+
+      if (allMatches.length < total) {
+        return fetchAllMatches(page + 1, size, allMatches);
+      }
+
+      return allMatches;
+    });
+  };
+
+  /**
+   * Exports all matches to a CSV file.
+   */
+  const handleExportAll = async (): Promise<void> => {
+    try {
+      const allMatches = await fetchAllMatches(); // Recursive fetch
+      const csvContent = convertToCSV(allMatches);
+      downloadCSV(csvContent, "all_matches.csv");
+    } catch (error) {
+      console.error("Error fetching all matches:", error);
+    }
+  };
+
   const visibleMatches = matches
     .map((match) => ({
       ...match,
@@ -168,7 +227,8 @@ export function Matches(props: MatchesProps) {
       startTime: match.startDate.substring(11, 16),
       endTime: match.endDate.substring(11, 16),
     }))
-    .slice();
+    .slice()
+    .sort(getComparator(order, orderBy));
 
   return (
     <Stack
@@ -176,6 +236,7 @@ export function Matches(props: MatchesProps) {
       spacing={2}
       sx={{ backgroundColor: "#f3f4f5", height: "100vh" }}
     >
+      {/* AppBar */}
       <AppBar
         position="static"
         color="default"
@@ -222,6 +283,7 @@ export function Matches(props: MatchesProps) {
         </Toolbar>
       </AppBar>
 
+      {/* Matches Table */}
       <Box sx={{ width: "100%", p: 2 }}>
         <Box
           sx={{
@@ -239,6 +301,7 @@ export function Matches(props: MatchesProps) {
               color="success"
               size="small"
               disabled={selected.length === 0}
+              onClick={handleExportSelected}
             >
               Export Selected ({selected.length})
             </Button>
@@ -247,6 +310,7 @@ export function Matches(props: MatchesProps) {
               variant="contained"
               color="success"
               size="small"
+              onClick={handleExportAll}
             >
               Export All Matches
             </Button>
@@ -279,9 +343,9 @@ export function Matches(props: MatchesProps) {
                     <TableCell
                       key={headCell.id}
                       sx={{
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        color: "#333",
+                        fontSize: "16px", // Larger font size
+                        fontWeight: "bold", // Make text bold
+                        color: "#333", // Text color
                         height: "50px",
                       }}
                     >
@@ -323,7 +387,7 @@ export function Matches(props: MatchesProps) {
                             selected.length === matches.length
                           }
                           onChange={handleSelectAllClick}
-                          inputProps={{ "aria-label": "Select all rows" }}
+                          inputProps={{ "aria-label": "Select all rows" }} // Add accessible label
                         />
                       </TableCell>
                       <TableCell>{match.courtId}</TableCell>

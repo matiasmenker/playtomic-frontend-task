@@ -1,4 +1,4 @@
-import { Match } from "../../../../technical-test-frontend-main/src/lib/api-types";
+import { Match } from "@/lib/api-types";
 
 /**
  * Compares two items in descending order by the specified key.
